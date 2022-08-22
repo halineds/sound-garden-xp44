@@ -1,31 +1,83 @@
-const inputCep = document.querySelector("#cep");
-const inputRua = document.querySelector("#rua");
-const inputComplemento = document.querySelector("#complemento");
-const inputBairro = document.querySelector("#bairro");
-const inputUF = document.querySelector("#UF");
-//JS DOM
+const url = "https://xp41-soundgarden-api.herokuapp.com";
+const evento = document.querySelector("#atracoes")
+const btnopen = document.querySelector(".btnopen")
+const inputID = document.querySelector("#inputId")
+const modal = document.querySelector("#modal")
+const btn = document.querySelector("#btn-fecha")
+const twoBtn = document.querySelector("#twobtn-fecha")
+const nome = document.querySelector("#name")
+const email = document.querySelector("#email")
+const ticket = document.querySelector("#lotacao")
+const btnEnviar = document.querySelector("#btn-enviar")
 
-const API_URL = "https://brasilapi.com.br/api";
 
-inputCep.onkeyup = async (evento) => {
-    //Testar se o cep é válido
-    if (inputCep.value.length < 8) {
-        return;
+function arrumarData (data) {
+    let date = data.split(""); // cortar a data para adicionar o / nos lugares corretos
+    let dataCorrigida =
+      date.slice(8, 10).join("") +
+      "/" +
+      date.slice(5, 7).join("") +
+      "/" +
+      date.slice(0, 4).join("");
+
+    return dataCorrigida;
+  };
+
+  async function todosEventos () {
+    const response = await fetch(`${url}/events`);
+    console.log(response)
+
+    const resposta = await response.json();
+    const atracoes = resposta.slice(0,3);
+    atracoes.forEach((prop) => {
+    evento.innerHTML += ` <article class="evento card p-5 m-3">
+    <h2>${prop.name} - ${arrumarData(prop.scheduled)}</h2>
+    <h4>${prop.attractions}</h4>
+    <p>${prop.description}</p>
+    <button class="btn btn-primary" onclick="showModal('${prop._id}')" >reservar ingresso</button>
+    </article>`;
+  })}
+
+    todosEventos();
+
+    async function showModal(id) {
+      modal.setAttribute("style", "display:flex");
+      inputID.value = id;
+      const resposta = await fetch(`${url}/events/${id}`);}
+
+      function fechaModal () {
+        modal.setAttribute("style", "display:none");
+        nome.value = "";
+        email.value = "";
+        lotacao.value="";
+        inputID.value =""; }
+
+      btn.addEventListener('click', fechaModal)
+
+      twoBtn.addEventListener('click', fechaModal)
+   
+      btnEnviar.addEventListener('click', async function criarReserva (e) {
+        e.preventDefault();
+
+        const reserva = {
+        "owner_name": nome.value,
+        "owner_email": email.value,
+        "number_tickets": lotacao.value,
+        "event_id":inputID.value
+        }
+
+        const response = await fetch(`${url}/bookings`, {
+        method:"POST",
+        body: JSON.stringify(reserva),
+        headers: {
+          "Content-type": "application/json",
+      },},)
+
+      const resultado = await response.json();
+      console.log(response)
+
+    if (response.status == 201) {
+     alert("Reserva efetuada com sucesso")
+     window.location.href = "admin.html"
     }
-    //Colocar popups que vão sugerir o valor correto e formato do cep
-    //Buscar informações do cep === Requisição a API do BRASILAPI
-    const resposta = await fetch ( `${API_URL}cep/v1/${inputCep.value}`,{
-
-    });
-    //extrair e imprimir 
-    const conteudoResposta = await resposta.json();
-
-    //atribuir pro html as respostas
-    inputRua.value = conteudoResposta.street;
-    inputBairro.value = conteudoResposta.neighborhood; 
-    inputUF.value = conteudoResposta.state; 
-    inputComplemento.value = conteudoResposta.city; 
-
-    console.log(conteudoResposta);
-    // alert (CEP Completo é X)
-};
+      })
